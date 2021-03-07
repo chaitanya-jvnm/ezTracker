@@ -10,6 +10,20 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from time import sleep
 import json
+import logging
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    ConversationHandler,
+    CallbackContext,
+)
+import requests
+import re
+import os
+from os import environ
 
 #%%
 HEADERS = ({'User-Agent':
@@ -17,7 +31,36 @@ HEADERS = ({'User-Agent':
             'Accept-Language': 'en-US, en;q=0.5'})
 
 #%%
-def main(url):
+#enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+
+#%%
+logger = logging.getLogger(__name__)
+
+# GENDER, PHOTO, LOCATION, BIO = range(4)
+prod = range(1)
+
+# def echo(update: Update, context: CallbackContext) -> None:
+#     """Echo the user message."""
+#     update.message.reply_text(update.message.text)
+
+#%%
+def start(update: Update, context: CallbackContext):
+    logger.info("User %s started the conversation.", user.first_name)
+    update.message.reply_text(
+        "Hi! I'm ezTracker. I can track prices of your products and let you know if they dip.(Currently only flip[kart supported.)"
+        "Type /url and enter an url to start tracking it"
+        'You can always send /help to get the full list of commands at your disposal'
+        'Send /cancel to stop tracking.\n\n'
+        # reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+    )
+
+#%%
+def scrapeURL(update: Update, context: CallbackContext) -> None:
+    url = update.message.text
+
     page = requests.get(url,headers=HEADERS)
     soup = BeautifulSoup(page.content, features="lxml")
 
@@ -50,6 +93,59 @@ def main(url):
     #print( "[ Rating: " + pRating + " ]\n" + pName + "\n[ Price: " + pPrice + " ]")
     # print ('{ "name": "' + pName + '", "rating":"' + pRating + '", "price":"' + pPrice + '" }')
     return '{ "name": "' + pName + '", "rating":"' + pRating + '", "price":"' + pPrice + '" }'
+    update.message.reply_text( "[ Rating: " + product['rating'] + " ]\n" + product['name'] + "\n[ Price: " + product['price'] + " ]")
+
+#%%
+# def updateChat(update: Update, context: CallbackContext):
+#     #get the recipients chat id
+#     chat_id = update.message.chat_id
+#     # bot.send_photo(chat_id=chat_id, photo=url)
+#     bot.send_message(chat_id=chat_id, text=scrapeURL)
+
+#%%
+def cancel(update: Update, context: CallbackContext) -> int:
+    user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
+    update.message.reply_text(
+        'Bye! I hope we can cross paths again some day.', reply_markup=ReplyKeyboardRemove()
+    )
+
+    return ConversationHandler.END
+
+#%%
+def main():
+    updater = Updater('1590128551:AAFZO4q13bx_s4K8cZ3zr9io3HZasw1_vuY')
+    # updater = Updater(environ['TBOT-KEY'])
+    dispatcher = updater.dispatcher
+    urlRegex = 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+    # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            prod: [MessageHandler(Filters.regex(urlRegex), scrapeURL)]
+            # GENDER: [MessageHandler(Filters.regex('^(Boy|Girl|Other)$'), gender)],
+            # PHOTO: [MessageHandler(Filters.photo, photo), CommandHandler('skip', skip_photo)],
+            # LOCATION: [
+            #     MessageHandler(Filters.location, location),
+            #     CommandHandler('skip', skip_location),
+            # ],
+            # BIO: [MessageHandler(Filters.text & ~Filters.command, bio)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+
+    dispatcher.add_handler(conv_handler)
+    # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, scrapeURL))
+
+    # dp.add_handler(CommandHandler('bop',updateChat))
+    updater.start_polling()
+    updater.idle()
+
+#%%
+if __name__ == '__main__':
+    main()
+
+
 
 
 #%%
