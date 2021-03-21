@@ -7,7 +7,7 @@ Currently only Flipkart URLs are supported, but im working on supoprting it for 
 # How it works
  - Download and install Telegram Messenger (https://telegram.org/).
  - Once downloaded, search for ezTracker, and click on the start button.
- - aaaand thats it, you'll be presented with  working guide on how it works..
+ - ...aaaand thats it, you'll be presented with  working guide on how it works..
 
 # Bug Reports / Issues
 Please feel free to add any issues you find in the Issues tab of github. I will try my best to get them fixed as soon as possible.
