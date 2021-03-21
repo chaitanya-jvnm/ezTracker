@@ -1,4 +1,4 @@
-<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/chaitanya-jvnm/ezTracker?color=%233399ff&style=for-the-badge">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/chaitanya-jvnm/ezTracker?color=%233399ff">
 
 # ezTracker
 A simple telegram bot to track prices of your favourite items from e-commerce websites.
