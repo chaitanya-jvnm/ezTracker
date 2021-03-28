@@ -44,35 +44,28 @@ def start(update: Update, context: CallbackContext) -> int:
 
 def scrape_f_url(update: Update, context: CallbackContext) -> None:
     logger.info("User %s used the flipkart command.", update.message.from_user.first_name)
-    update.message.reply_text("Please enter the URL of the product you want to track.")
     urlRegex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
     url = update.message.text
-
     if not(re.match(urlRegex,url)):
         update.message.reply_text("Please enter a valid URL")
         return
-
     page = requests.get(url,headers=HEADERS)
     soup = BeautifulSoup(page.content, features="lxml")
-
     #Product Name section
     try:
         pName = soup.find_all(class_="B_NuCI")[0].get_text().replace(u'\xa0', u' ').strip()
     except:
         pName = ''
-
     # Product price section
     try:
         pPrice = soup.find_all(class_="_30jeq3")[0].get_text().strip()
     except:
-        pPrice = ''
-    
+        pPrice = ''  
     #Product rating
     try:
         pRating = soup.find_all(class_="_3LWZlK")[0].get_text()
     except:
         pRating = ''
-
     update.message.reply_text( "[ Rating: " + pRating + " ]\n" + pName + "\n[ Price: " + pPrice + " ]")
     return
 
@@ -111,9 +104,8 @@ def track_flipkart(update: Update, context: CallbackContext) -> int:
     return FLIPKART
 
 def main():
-    updater = Updater(environ['TBOT_KEY'])
+    updater = Updater(environ['TBOT_KEY'],use_context=True)  
     dispatcher = updater.dispatcher
-
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -122,7 +114,7 @@ def main():
                 MessageHandler(Filters.regex('^(amazon)'),track_amazon)
             ],
             AMAZON:[
-                # MessageHandler(Filters.text & ~Filters.command, scrape_a_url)
+                #MessageHandler(Filters.text & ~Filters.command, scrape_a_url)
             ],
             FLIPKART:[
                 MessageHandler(Filters.text & ~Filters.command, scrape_f_url)
@@ -131,12 +123,11 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
-    dispatcher.add_handler(CommandHandler("help", help_command))
     dispatcher.add_handler(conv_handler)
-    
+    dispatcher.add_handler(CommandHandler("help", help_command))
+
     updater.start_polling()
     updater.idle()
 
 if __name__ == '__main__':
     main()
-
